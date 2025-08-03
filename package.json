@@ -4,8 +4,8 @@
   "description": "Sistema web para controle de atendimentos psicossociais com Express.js, PostgreSQL e frontend com AJAX",
   "main": "index.js",
   "scripts": {
-    "start": "node index.js",
-    "dev": "nodemon index.js",
+    "start": "node server-simple.js",
+    "dev": "nodemon server-simple.js",
     "build": "webpack --mode production",
     "build:dev": "webpack --mode development",
     "webpack:dev": "webpack serve --mode development",
