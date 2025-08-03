@@ -4,10 +4,10 @@
  */
 
 // Importar CSS principal
-import '../public/css/style.css';
+import '../../public/css/style.css';
 
 // Importar módulos JavaScript
-import '../public/js/app.js';
+import '../../public/js/app.js';
 
 // Log de inicialização
 console.log('🎯 Frontend bundle carregado via Webpack!');
