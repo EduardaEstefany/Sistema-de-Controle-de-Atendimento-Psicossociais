@@ -331,10 +331,6 @@ npm start
 4. Push para a branch (`git push origin feature/AmazingFeature`)
 5. Abra um Pull Request
 
-## 📄 Licença
-
-Este projeto está licenciado sob a Licença MIT - veja o arquivo [LICENSE](LICENSE) para detalhes.
-
 ## 👥 Autor
 
 **Eduarda** - Desenvolvimento Full Stack
