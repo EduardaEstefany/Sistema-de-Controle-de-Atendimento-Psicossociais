@@ -5,9 +5,9 @@
 ```
 ┌─────────────────┐    HTTP/AJAX    ┌─────────────────┐    SQL    ┌─────────────────┐
 │                 │ ──────────────→ │                 │ ────────→ │                 │
-│    Frontend     │                 │    Backend      │           │   PostgreSQL    │
+│    Frontend     │                 │    Backend      │           │     SQLite      │
 │   (Browser)     │ ←────────────── │   (Express)     │ ←──────── │    Database     │
-│                 │    JSON/REST    │                 │   Data    │                 │
+│                 │    JSON/REST    │                 │   Data    │ (with PG compat)│
 └─────────────────┘                 └─────────────────┘           └─────────────────┘
       │                                      │
       │                                      │
@@ -18,6 +18,7 @@
 │                 │                 │ - Controllers   │
 └─────────────────┘                 │ - Services      │
                                     │ - Models        │
+                                    │ - DB Adapter    │
                                     └─────────────────┘
 ```
 
@@ -36,8 +37,9 @@
 - **Models**: Representação de dados
 
 ### Persistência
-- **PostgreSQL**: Banco relacional
-- **Connection Pool**: Otimização de conexões
+- **SQLite**: Banco relacional primário (compatível com PostgreSQL)
+- **Database Adapter**: Camada de abstração para compatibilidade
+- **Connection Pooling**: Simulado para manter interface consistente
 
 ## 🧩 Módulos e Responsabilidades
 
@@ -100,9 +102,21 @@ const createErrorResponse = (message, statusCode) => Object
 const isValidId = (id) => boolean
 ```
 
-### 4. Database (Singleton Pattern)
+### 4. Database (Singleton Pattern + Adapter Pattern)
 
-#### `database.js`
+#### `database-sqlite.js` (Implementação Atual)
+```javascript
+class SQLiteDatabase {
+    constructor()              // Singleton implementation
+    async query(text, params)  // Adaptador para queries PostgreSQL
+    async close()             // Cleanup
+    translateQuery(query)     // Tradução PG → SQLite
+    formatResults(results)    // Formatação de resultados
+    static getConfig()        // Função pura para config
+}
+```
+
+#### `database.js` (PostgreSQL - Alternativo)
 ```javascript
 class Database {
     constructor()           // Singleton implementation
@@ -111,6 +125,12 @@ class Database {
     static getConfig()     // Função pura para config
 }
 ```
+
+**Adapter Pattern**: O `database-sqlite.js` implementa um adaptador que:
+- ✅ Traduz queries PostgreSQL para SQLite
+- ✅ Mantém a mesma interface da classe `Database`
+- ✅ Simula connection pooling para compatibilidade
+- ✅ Formata resultados no padrão esperado pelo PostgreSQL
 
 ## 📡 Frontend - Programação Funcional e OO
 
@@ -186,7 +206,73 @@ JSON Response
 Frontend Rendering
 ```
 
-## 🛠️ Implementação dos Paradigmas
+## �️ Estratégia de Banco de Dados
+
+### SQLite como Solução Principal
+
+#### Justificativa Técnica
+O projeto utiliza SQLite como banco principal por questões práticas e pedagógicas:
+
+**✅ Vantagens para Desenvolvimento:**
+- **Zero Configuration**: Funciona imediatamente após `npm install`
+- **Portabilidade**: Banco em arquivo único, versionável
+- **Performance Adequada**: Ideal para aplicações de pequeno/médio porte
+- **Compatibilidade SQL**: Suporte a maior parte do SQL padrão
+- **Facilidade de Backup**: Simples cópia de arquivo
+
+#### Implementação do Adapter Pattern
+
+```javascript
+// database-sqlite.js
+class SQLiteDatabase {
+    async query(text, params) {
+        // 1. Traduzir query PostgreSQL → SQLite
+        const translatedQuery = this.translateQuery(text);
+        
+        // 2. Executar query SQLite
+        const result = await this.db.all(translatedQuery, params);
+        
+        // 3. Formatar resultado no padrão PostgreSQL
+        return this.formatResults(result);
+    }
+    
+    translateQuery(query) {
+        // Adaptações específicas:
+        // SERIAL → INTEGER PRIMARY KEY AUTOINCREMENT
+        // TIMESTAMP → TEXT
+        // DATE → TEXT
+        return query
+            .replace(/SERIAL PRIMARY KEY/g, 'INTEGER PRIMARY KEY AUTOINCREMENT')
+            .replace(/TIMESTAMP/g, 'TEXT')
+            .replace(/\$(\d+)/g, '?'); // Parâmetros PostgreSQL → SQLite
+    }
+    
+    formatResults(results) {
+        // Simula formato de retorno do PostgreSQL
+        return {
+            rows: results,
+            rowCount: results.length
+        };
+    }
+}
+```
+
+#### Migração para PostgreSQL
+
+Para migrar para PostgreSQL no futuro:
+
+1. **Trocar Import**: `database.js` no lugar de `database-sqlite.js`
+2. **Configurar Environment**: Variáveis de conexão PostgreSQL
+3. **Zero Mudanças**: Mesmo código nos Services/Controllers
+
+```javascript
+// Em production: trocar esta linha
+const db = require('./config/database-sqlite');
+// Por esta:
+const db = require('./config/database');
+```
+
+## �🛠️ Implementação dos Paradigmas
 
 ### Programação Orientada a Objetos
 
@@ -316,10 +402,11 @@ const validateForm = (formData) => {
 ## 📊 Performance e Otimizações
 
 ### Backend
-- **Connection Pooling**: PostgreSQL pool para reuso de conexões
+- **Connection Pooling**: SQLite com simulação de pool para compatibilidade
 - **Prepared Statements**: Previne SQL injection e melhora performance
 - **Error Handling**: Tratamento robusto sem vazamento de dados
 - **Middleware**: Logging e validação modulares
+- **Database Adapter**: Camada de tradução para diferentes SGBDs
 
 ### Frontend
 - **Webpack**: Bundle otimizado e code splitting
@@ -426,6 +513,43 @@ EXPOSE 3000
 CMD ["npm", "start"]
 ```
 
+## 🗄️ Estrutura de Dados SQLite
+
+### Schema Implementado
+```sql
+CREATE TABLE atendimentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    profissional TEXT NOT NULL,
+    data TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('Psicológico', 'Pedagógico', 'Assistência Social')),
+    observacoes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Dados de Exemplo
+```javascript
+// Dados inseridos automaticamente na inicialização
+const dadosExemplo = [
+    {
+        nome: 'Maria Silva',
+        profissional: 'Dr. João Santos',
+        data: '2025-01-15',
+        tipo: 'Psicológico',
+        observacoes: 'Primeira consulta - ansiedade'
+    },
+    // ... mais 34 registros para demonstração
+];
+```
+
+### Arquivo de Banco
+- **Localização**: `./database.sqlite` (raiz do projeto)
+- **Tamanho**: ~8KB com dados de exemplo
+- **Backup**: Simples cópia do arquivo
+- **Versionamento**: Incluído no `.gitignore`
+
 ---
 
-**Conclusão**: O sistema implementa com sucesso os paradigmas de programação orientada a objetos e funcional, demonstrando modularidade, reutilização de código, e separação clara de responsabilidades, atendendo a todos os requisitos técnicos especificados.
+**Conclusão**: O sistema implementa com sucesso os paradigmas de programação orientada a objetos e funcional, utilizando SQLite como solução de banco de dados pragmática para desenvolvimento acadêmico, demonstrando modularidade, reutilização de código, e separação clara de responsabilidades, atendendo a todos os requisitos técnicos especificados.
