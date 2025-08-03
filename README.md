@@ -4,6 +4,24 @@
 
 Sistema web desenvolvido para auxiliar no cadastro e controle de atendimentos psicossociais realizados por psicólogos, assistentes sociais e pedagogos de um centro comunitário.
 
+## 🌍 **Sistema Online - Acesse Agora!**
+
+### 🔗 **URL do Sistema em Produção:**
+**https://sistema-de-controle-de-atendimento.vercel.app**
+
+- ✅ **Disponível 24/7** - Acesse a qualquer momento
+- ✅ **Totalmente Funcional** - Todas as funcionalidades ativas
+- ✅ **Dados de Exemplo** - Sistema pré-populado para demonstração
+- ✅ **Responsivo** - Funciona em desktop e mobile
+
+### 📱 **Como usar:**
+1. Acesse o link acima
+2. Navegue pelas abas: Dashboard, Cadastro, Lista
+3. Teste todas as funcionalidades CRUD
+4. Visualize as estatísticas em tempo real
+
+> **Nota**: Este é um ambiente de demonstração. Os dados são resetados periodicamente.
+
 ## 🚀 Tecnologias Utilizadas
 
 ### Backend
@@ -174,6 +192,12 @@ npm start
 
 ## 🌐 Acesso
 
+### 🌍 **Produção (Online 24/7)**
+- **Sistema Completo**: https://sistema-de-controle-de-atendimento.vercel.app
+- **API**: https://sistema-de-controle-de-atendimento.vercel.app/api
+- **Health Check**: https://sistema-de-controle-de-atendimento.vercel.app/health
+
+### 💻 **Desenvolvimento Local**
 - **Frontend**: http://localhost:3000
 - **API**: http://localhost:3000/api
 - **Health Check**: http://localhost:3000/health
@@ -335,7 +359,28 @@ npm start
 
 **Eduarda** - Desenvolvimento Full Stack
 
-## 📞 Suporte
+## � Deploy e Produção
+
+### 🌐 **Sistema em Produção**
+O sistema está hospedado no **Vercel** e disponível 24/7:
+- **URL**: https://sistema-de-controle-de-atendimento.vercel.app
+- **Deploy Automático**: Toda atualização no GitHub gera novo deploy
+- **Ambiente**: Produção com dados de demonstração
+
+### 🔄 **Processo de Deploy**
+1. **Código atualizado** → Push para GitHub
+2. **Vercel detecta** → Deploy automático iniciado
+3. **Build completo** → Sistema atualizado em ~2 minutos
+4. **URL atualizada** → Acesso imediato às novas funcionalidades
+
+### ⚙️ **Configuração de Deploy**
+- **Plataforma**: Vercel
+- **Branch**: `main` 
+- **Build Command**: `npm install`
+- **Start Command**: `npm start`
+- **Node Version**: 18.x
+
+## �📞 Suporte
 
 Para suporte ou dúvidas sobre o sistema:
 - Criar issue no GitHub
