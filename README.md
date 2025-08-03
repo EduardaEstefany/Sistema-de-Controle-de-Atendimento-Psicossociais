@@ -9,7 +9,7 @@ Sistema web desenvolvido para auxiliar no cadastro e controle de atendimentos ps
 ### Backend
 - **Node.js** - Runtime JavaScript
 - **Express.js** - Framework web
-- **PostgreSQL** - Banco de dados relacional
+- **SQLite** - Banco de dados relacional (com suporte para PostgreSQL)
 - **CORS** - Middleware para cross-origin requests
 - **dotenv** - Gerenciamento de variáveis de ambiente
 
@@ -88,12 +88,40 @@ public/
 }
 ```
 
-## 🛠️ Instalação e Configuração
+## �️ Banco de Dados
+
+### SQLite como Solução Principal
+
+Este projeto utiliza **SQLite** como banco de dados principal, embora tenha sido originalmente projetado para PostgreSQL. A escolha do SQLite foi feita pelos seguintes motivos:
+
+#### ✅ Vantagens do SQLite para este projeto:
+- **Simplicidade de instalação**: Não requer configuração de servidor de banco separado
+- **Portabilidade**: O banco é um arquivo único, fácil de transportar e versionar
+- **Zero configuração**: Funciona imediatamente após `npm install`
+- **Ideal para desenvolvimento**: Perfeito para projetos acadêmicos e protótipos
+- **Performance adequada**: Excelente para aplicações de pequeno a médio porte
+- **Compatibilidade**: Mantém a mesma interface SQL do PostgreSQL
+
+#### 🔄 Camada de Compatibilidade
+O sistema inclui uma camada de abstração (`database-sqlite.js`) que:
+- Traduz queries específicas do PostgreSQL para SQLite
+- Mantém a mesma interface da aplicação
+- Permite migração futura para PostgreSQL sem alterações no código de negócio
+- Simula funcionalidades como connection pooling
+
+#### 📈 Migração para PostgreSQL
+Para usar PostgreSQL em produção, basta:
+1. Instalar PostgreSQL
+2. Configurar variáveis de ambiente
+3. Trocar o import de `database-sqlite.js` para `database.js`
+4. Executar as migrations
+
+## �🛠️ Instalação e Configuração
 
 ### Pré-requisitos
 - Node.js (v14 ou superior)
-- PostgreSQL (v12 ou superior)
 - NPM ou Yarn
+- *(SQLite incluído automaticamente - não requer instalação separada)*
 
 ### 1. Clone o repositório
 ```bash
@@ -106,10 +134,13 @@ cd sistema-controle-atendimentos-psicossociais
 npm install
 ```
 
-### 3. Configure o banco de dados
-Crie um banco PostgreSQL e configure as variáveis no arquivo `.env`:
+### 3. Configure o banco de dados (Opcional)
+O sistema funciona automaticamente com SQLite, sem necessidade de configuração adicional. 
+
+Para usar PostgreSQL no futuro, crie um arquivo `.env`:
 
 ```env
+# Configuração PostgreSQL (opcional)
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=atendimentos_psicossociais
@@ -118,6 +149,8 @@ DB_PASSWORD=sua_senha
 PORT=3000
 NODE_ENV=development
 ```
+
+**Nota**: Com SQLite, o banco é criado automaticamente no primeiro uso como `database.sqlite`.
 
 ### 4. Execute a aplicação
 
@@ -194,9 +227,23 @@ O frontend utiliza AJAX para todas as operações:
 - Prevenção de envios inválidos
 - Sanitização de HTML
 
-## 📊 Banco de Dados
+## 📊 Estrutura do Banco de Dados
 
-### Tabela: atendimento
+### Tabela: atendimentos (SQLite)
+```sql
+CREATE TABLE atendimentos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    nome TEXT NOT NULL,
+    profissional TEXT NOT NULL,
+    data TEXT NOT NULL,
+    tipo TEXT NOT NULL CHECK (tipo IN ('Psicológico', 'Pedagógico', 'Assistência Social')),
+    observacoes TEXT,
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+);
+```
+
+### Para PostgreSQL (versão alternativa)
 ```sql
 CREATE TABLE atendimento (
     id SERIAL PRIMARY KEY,
@@ -234,7 +281,8 @@ npm run webpack:dev
 - **CSS minificado** em produção
 - **Compressão GZIP** no servidor
 - **Cache de headers** apropriados
-- **Connection pooling** no PostgreSQL
+- **SQLite** com otimizações de query
+- **Connection pooling simulado** para compatibilidade
 
 ## 🔐 Segurança
 
@@ -247,7 +295,18 @@ npm run webpack:dev
 
 ## 🚀 Deploy
 
-### Variáveis de Ambiente para Produção
+### Para SQLite (Configuração Atual)
+```bash
+# Apenas definir o ambiente
+NODE_ENV=production
+PORT=3000
+
+# O banco SQLite será criado automaticamente
+npm run build
+npm start
+```
+
+### Para PostgreSQL (Configuração Alternativa)
 ```env
 NODE_ENV=production
 DB_HOST=seu_host_producao
