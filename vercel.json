@@ -2,17 +2,17 @@
   "version": 2,
   "builds": [
     {
-      "src": "server-simple.js",
+      "src": "server-vercel.js",
       "use": "@vercel/node",
       "config": {
-        "includeFiles": ["public/**", "src/**", "data/**"]
+        "maxLambdaSize": "50mb"
       }
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "server-simple.js"
+      "dest": "server-vercel.js"
     }
   ],
   "env": {
