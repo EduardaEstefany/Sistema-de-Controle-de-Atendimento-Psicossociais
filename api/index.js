@@ -1,17 +1,3 @@
-/**
- * Servidor básico para Vercel - Máxima compatibilidade serverless
- * Versão minimalista garantida para funcionar
- */
-
-const express = require('express');
-const path = require('path');
-
-const app = express();
-
-// Middlewares básicos
-app.use(express.json());
-app.use(express.static('public'));
-
 // Dados mock em memória
 const mockData = [
     { id: 1, nome: 'Maria Silva', profissional: 'Dr. João', data: '2025-01-15', tipo: 'Psicológico', observacoes: 'Primeira consulta' },
@@ -23,68 +9,84 @@ const mockData = [
 
 let nextId = 6;
 
-// API Routes
-app.get('/api/atendimentos', (req, res) => {
-    res.json({ success: true, data: mockData });
-});
-
-app.get('/api/atendimento/:id', (req, res) => {
-    const item = mockData.find(a => a.id == req.params.id);
-    if (!item) {
-        return res.status(404).json({ success: false, message: 'Não encontrado' });
+// Handler function para Vercel
+export default function handler(req, res) {
+    // Headers CORS
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
     }
-    res.json({ success: true, data: item });
-});
 
-app.post('/api/atendimento', (req, res) => {
-    const { nome, profissional, data, tipo, observacoes } = req.body;
-    const novo = { id: nextId++, nome, profissional, data, tipo, observacoes };
-    mockData.push(novo);
-    res.json({ success: true, data: novo });
-});
-
-app.put('/api/atendimento/:id', (req, res) => {
-    const index = mockData.findIndex(a => a.id == req.params.id);
-    if (index === -1) {
-        return res.status(404).json({ success: false, message: 'Não encontrado' });
+    const { method, url } = req;
+    
+    // GET /api/atendimentos
+    if (method === 'GET' && url === '/api/atendimentos') {
+        return res.json({ success: true, data: mockData });
     }
-    Object.assign(mockData[index], req.body);
-    res.json({ success: true, data: mockData[index] });
-});
-
-app.delete('/api/atendimento/:id', (req, res) => {
-    const index = mockData.findIndex(a => a.id == req.params.id);
-    if (index === -1) {
-        return res.status(404).json({ success: false, message: 'Não encontrado' });
+    
+    // GET /api/atendimento/:id
+    if (method === 'GET' && url.startsWith('/api/atendimento/')) {
+        const id = url.split('/').pop();
+        const item = mockData.find(a => a.id == id);
+        if (!item) {
+            return res.status(404).json({ success: false, message: 'Não encontrado' });
+        }
+        return res.json({ success: true, data: item });
     }
-    mockData.splice(index, 1);
-    res.json({ success: true, message: 'Removido' });
-});
-
-app.get('/api/atendimentos/estatisticas', (req, res) => {
-    const tipos = {};
-    mockData.forEach(a => {
-        tipos[a.tipo] = (tipos[a.tipo] || 0) + 1;
-    });
-    res.json({ 
-        success: true, 
-        data: { 
-            totalAtendimentos: mockData.length, 
-            porTipo: tipos 
-        } 
-    });
-});
-
-app.get('/health', (req, res) => {
-    res.json({ status: 'OK', total: mockData.length });
-});
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-module.exports = app;
+    
+    // POST /api/atendimento
+    if (method === 'POST' && url === '/api/atendimento') {
+        const { nome, profissional, data, tipo, observacoes } = req.body;
+        const novo = { id: nextId++, nome, profissional, data, tipo, observacoes };
+        mockData.push(novo);
+        return res.json({ success: true, data: novo });
+    }
+    
+    // PUT /api/atendimento/:id
+    if (method === 'PUT' && url.startsWith('/api/atendimento/')) {
+        const id = url.split('/').pop();
+        const index = mockData.findIndex(a => a.id == id);
+        if (index === -1) {
+            return res.status(404).json({ success: false, message: 'Não encontrado' });
+        }
+        Object.assign(mockData[index], req.body);
+        return res.json({ success: true, data: mockData[index] });
+    }
+    
+    // DELETE /api/atendimento/:id
+    if (method === 'DELETE' && url.startsWith('/api/atendimento/')) {
+        const id = url.split('/').pop();
+        const index = mockData.findIndex(a => a.id == id);
+        if (index === -1) {
+            return res.status(404).json({ success: false, message: 'Não encontrado' });
+        }
+        mockData.splice(index, 1);
+        return res.json({ success: true, message: 'Removido' });
+    }
+    
+    // GET /api/atendimentos/estatisticas
+    if (method === 'GET' && url === '/api/atendimentos/estatisticas') {
+        const tipos = {};
+        mockData.forEach(a => {
+            tipos[a.tipo] = (tipos[a.tipo] || 0) + 1;
+        });
+        return res.json({ 
+            success: true, 
+            data: { 
+                totalAtendimentos: mockData.length, 
+                porTipo: tipos 
+            } 
+        });
+    }
+    
+    // Health check
+    if (method === 'GET' && url === '/health') {
+        return res.json({ status: 'OK', total: mockData.length });
+    }
+    
+    // Default response
+    res.status(404).json({ success: false, message: 'Endpoint não encontrado' });
+}
